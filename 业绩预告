@@ -1,0 +1,66 @@
+import csv
+import os
+import urllib
+from bs4 import BeautifulSoup
+import re
+import requests
+import codecs
+import time
+import pandas as pd
+
+def impairmentOfGoodwill(web):
+    handle_web = requests.get(web)
+    web_soup = BeautifulSoup(handle_web.content,'lxml')
+    content = str()
+    for titles in web_soup.find_all('div',class_='contenttext'):
+        for k in titles.find_all('p'):
+            for title in k:
+                content = content+str(title)
+    if '商誉减值'or '资产减值' in content:
+        #print('ok')
+        syjz_sentens = re.findall('(商誉减值.*?。)',content)
+        zcjz_sentens = re.findall('(资产减值.*?。)',content)
+        #print(syjz_sentens,'\n',zcjz_sentens)
+    return [syjz_sentens,zcjz_sentens]
+    
+def get_goodwill_capital(web):
+        content = impairmentOfGoodwill(web)
+
+        syjz_amount = []
+        zcjz_amount = []
+        syjz_res = []
+        zcjz_res = []
+        for a in content[0]:
+            syjz=re.findall('([0-9]*?.[0-9]*?万?亿元)',a)
+            if len(syjz)>0:
+                result1 = '商誉减值：'+str(syjz)
+                syjz_amount.append(result1)
+                syjz_res = list(set(syjz_amount))
+        print(syjz_res)
+
+
+        for b in content[1]:
+            zcjz=re.findall('([0-9]*?.[0-9]*?万?亿元)',b)
+            if len(zcjz)>0:
+                result2 = '资产减值：'+str(zcjz)
+                zcjz_amount.append(result2)
+                zcjz_amount = list(set(zcjz_amount))
+                zcjz_res = list(set(zcjz_amount))
+        print(zcjz_res)
+        #print(web,'error')
+    
+url_file = pd.read_excel(r'.\公司公告(1)(1).xls')
+url_list = url_file[['证券代码','Unnamed: 6']]
+url_list
+        
+n =0
+for web in url_list['Unnamed: 6'][n:]:
+    print('********************************************')
+    print(web)
+    print(n,url_list['证券代码'].loc[n])
+    get_goodwill_capital(web)
+    n = n+1
+    time.sleep(2)
+url_file = pd.read_excel(r'E:\过往垃圾\WeChat Files\WeChat Files\Ruceryy\FileStorage\File\2020-02\公司公告(1)(1).xls')
+url_list = url_file[['证券代码','Unnamed: 6']]
+url_list
